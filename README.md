@@ -47,7 +47,7 @@ Abre **http://localhost:5000** para chatear con tu modelo local.
 | `LM_STUDIO_MODEL` | `openai/gpt-oss-20b` | Modelo a usar (debe estar disponible/cargable en LM Studio) |
 | `SYSTEM_PROMPT` | `Responde siempre en español.` | Instrucción de sistema; cambia el idioma/tono. Déjala vacía para no enviar instrucción |
 | `TEMPERATURE` | `0.7` | Temperatura de muestreo. Cada modelo puede preferir otra (gpt-oss ~1.0) |
-| `MAX_TOKENS` | `4096` | Máximo de tokens de la respuesta (incluye el razonamiento interno) |
+| `MAX_TOKENS` | `8192` | Máximo de tokens de la respuesta (incluye el razonamiento interno) |
 | `LOAD_RETRY_SECONDS` | `300` | Tiempo máximo de reintento si el modelo se está cargando (JIT) |
 
 Ejemplo en local:

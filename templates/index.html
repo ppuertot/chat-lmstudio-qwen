@@ -523,7 +523,12 @@
                 }
 
                 // Render final tras cerrar el stream
-                aiDiv.innerHTML = formatMarkdown(aiText);
+                if (aiText.trim()) {
+                    aiDiv.innerHTML = formatMarkdown(aiText);
+                } else {
+                    aiDiv.className = 'message system';
+                    aiDiv.textContent = '(El modelo no devolvió contenido)';
+                }
                 scrollToBottom();
 
             } catch (error) {

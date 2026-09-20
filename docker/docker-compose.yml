@@ -16,7 +16,7 @@ services:
       - SYSTEM_PROMPT=Responde siempre en español.
       # Parámetros de muestreo. gpt-oss rinde mejor cerca de 1.0.
       - TEMPERATURE=0.7
-      - MAX_TOKENS=4096
+      - MAX_TOKENS=8192
       # Tiempo máximo de espera si el modelo se está cargando (JIT) en segundos
       - LOAD_RETRY_SECONDS=300
     restart: unless-stopped
