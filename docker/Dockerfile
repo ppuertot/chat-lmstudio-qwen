@@ -8,10 +8,11 @@ RUN apt-get update && apt-get install -y \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Copiar archivos necesarios (incluyendo templates)
+# Copiar archivos necesarios (incluyendo templates y static)
 COPY requirements.txt .
 COPY app.py .
 COPY templates/ ./templates/
+COPY static/ ./static/
 
 # Instalar dependencias Python
 RUN pip install --no-cache-dir -r requirements.txt

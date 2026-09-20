@@ -18,7 +18,7 @@ LM_STUDIO_URL = os.environ.get(
 # Modelo a usar (configurable con la variable de entorno LM_STUDIO_MODEL)
 MODEL_NAME = os.environ.get(
     "LM_STUDIO_MODEL",
-    "openai/gpt-oss-20b"
+    "deepseek/deepseek-r1-0528-qwen3-8b"
 )
 
 # Instrucción de sistema (idioma/tono). Por defecto responde en español.
@@ -34,7 +34,8 @@ TEMPERATURE = float(os.environ.get("TEMPERATURE", "0.7"))
 
 # Máximo de tokens de la respuesta (configurable con MAX_TOKENS). Debe ser
 # amplio porque el razonamiento interno también consume este presupuesto.
-MAX_TOKENS = int(os.environ.get("MAX_TOKENS", "4096"))
+# No puede superar el contexto con el que está cargado el modelo en LM Studio.
+MAX_TOKENS = int(os.environ.get("MAX_TOKENS", "8192"))
 
 # Si el modelo aún se está cargando (JIT de LM Studio), reintentar hasta
 # LOAD_RETRY_SECONDS antes de devolver error.
@@ -104,6 +105,8 @@ def _stream_response(payload):
     # porque si falta requests asume ISO-8859-1 y corrompe los acentos).
     # Usamos solo delta.content (ignoramos reasoning_content).
     try:
+        emitted = False
+        finish_reason = None
         for raw_line in response.iter_lines():
             if not raw_line:
                 continue
@@ -116,12 +119,24 @@ def _stream_response(payload):
                 chunk = json.loads(line)
             except json.JSONDecodeError:
                 continue
-            delta = chunk.get('choices', [{}])[0].get('delta', {})
-            content = delta.get('content') or ''
+            choice = chunk.get('choices', [{}])[0]
+            if choice.get('finish_reason'):
+                finish_reason = choice['finish_reason']
+            content = choice.get('delta', {}).get('content') or ''
             if content:
+                emitted = True
                 yield _sse({'delta': content})
     except requests.exceptions.RequestException as e:
         yield _sse({'error': f'Se interrumpió la conexión con LM Studio: {str(e)}'})
+        return
+
+    # Algunos modelos de razonamiento pueden terminar sin emitir "content"
+    # (p. ej. si el razonamiento consumió todo el presupuesto de tokens).
+    if not emitted:
+        error = 'El modelo no devolvió contenido.'
+        if finish_reason == 'length':
+            error += ' Se alcanzó el límite de tokens; sube MAX_TOKENS.'
+        yield _sse({'error': error, 'finish_reason': finish_reason})
         return
 
     yield 'data: [DONE]\n\n'
