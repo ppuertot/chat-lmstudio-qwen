@@ -11,6 +11,14 @@ services:
     network_mode: host
     environment:
       - LM_STUDIO_URL=http://localhost:1234/v1/chat/completions
+      - LM_STUDIO_MODEL=openai/gpt-oss-20b
+      # Idioma/tono de las respuestas (por defecto español)
+      - SYSTEM_PROMPT=Responde siempre en español.
+      # Parámetros de muestreo. gpt-oss rinde mejor cerca de 1.0.
+      - TEMPERATURE=1.0
+      - MAX_TOKENS=4096
+      # Tiempo máximo de espera si el modelo se está cargando (JIT) en segundos
+      - LOAD_RETRY_SECONDS=300
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:5000/"]

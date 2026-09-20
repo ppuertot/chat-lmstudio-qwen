@@ -39,48 +39,8 @@
             border-radius: 16px;
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
             display: flex;
-            overflow: hidden;
-        }
-
-        /* Sidebar */
-        .sidebar {
-            width: 300px;
-            background: var(--bg-primary);
-            padding: 20px;
-            border-right: 1px solid #2a2a4a;
-            display: flex;
             flex-direction: column;
-        }
-
-        .logo {
-            font-size: 24px;
-            font-weight: bold;
-            margin-bottom: 30px;
-            text-align: center;
-            color: var(--bg-message-user);
-        }
-
-        .model-selector {
-            flex: 1;
-        }
-
-        .model-selector h3 {
-            font-size: 14px;
-            color: var(--text-secondary);
-            margin-bottom: 12px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        #model-select {
-            width: 100%;
-            padding: 12px;
-            background: var(--bg-secondary);
-            border: 1px solid var(--accent);
-            border-radius: 8px;
-            color: var(--text-primary);
-            font-size: 14px;
-            cursor: pointer;
+            overflow: hidden;
         }
 
         .status-indicator {
@@ -90,7 +50,6 @@
             padding: 12px;
             background: var(--bg-secondary);
             border-radius: 8px;
-            margin-top: 15px;
             font-size: 13px;
         }
 
@@ -110,22 +69,32 @@
             font-size: 13px;
         }
 
+        .status-bar {
+            padding: 8px 20px;
+            background: var(--bg-primary);
+            border-top: 1px solid #2a2a4a;
+            display: flex;
+            justify-content: center;
+        }
+
         /* Chat Area */
         .chat-area {
             flex: 1;
             display: flex;
             flex-direction: column;
             background: var(--bg-secondary);
+            min-height: 0;
         }
 
         .chat-header {
-            padding: 20px;
+            padding: 18px 20px;
             background: var(--bg-primary);
             border-bottom: 1px solid #2a2a4a;
+            text-align: center;
         }
 
         .chat-header h2 {
-            font-size: 18px;
+            font-size: 20px;
             margin-bottom: 5px;
         }
 
@@ -272,34 +241,16 @@
                 height: 100vh;
                 border-radius: 0;
             }
-
-            .sidebar {
-                display: none;
-            }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <!-- Sidebar -->
-        <aside class="sidebar">
-            <div class="logo">
-                🤖 LM Studio Chat
-            </div>
-
-            <!-- Modelo fijo: deepseek/deepseek-r1-0528-qwen3-8b -->
-
-            <div class="status-indicator" id="status-indicator">
-                <div class="status-dot"></div>
-                <span class="status-text" id="status-text">Conectando...</span>
-            </div>
-        </aside>
-
         <!-- Chat Area -->
         <main class="chat-area">
             <header class="chat-header">
-                <h2>💬 Chat con IA Local</h2>
-                <p>Haz preguntas y recibe respuestas instantáneas de tu modelo local</p>
+                <h2>🤖 Chat con LM Studio</h2>
+                <p>Chat con IA local</p>
             </header>
 
             <div id="messages-container">
@@ -322,6 +273,13 @@
                     </button>
                 </div>
             </div>
+
+            <footer class="status-bar">
+                <div class="status-indicator" id="status-indicator">
+                    <div class="status-dot"></div>
+                    <span class="status-text" id="status-text">Conectando...</span>
+                </div>
+            </footer>
         </main>
     </div>
 
@@ -331,25 +289,33 @@
         const STATUS_CHECK_INTERVAL = 5000; // 5 segundos
         
         // Elementos DOM
-        const modelSelect = document.getElementById('model-select');
         const messagesContainer = document.getElementById('messages-container');
         const messageInput = document.getElementById('message-input');
         const sendBtn = document.getElementById('send-btn');
         const statusIndicator = document.getElementById('status-indicator');
         const statusText = document.getElementById('status-text');
 
-        // Modelo fijo: deepseek/deepseek-r1-0528-qwen3-8b
-        const DEFAULT_MODEL_ID = 'deepseek/deepseek-r1-0528-qwen3-8b';
+        // Modelo configurado en el backend (variable de entorno LM_STUDIO_MODEL)
+        const DEFAULT_MODEL_ID = {{ model|tojson }};
 
         function initUI() {
             statusIndicator.querySelector('.status-dot').classList.add('online');
             statusText.textContent = `✅ Conectado a ${DEFAULT_MODEL_ID}`;
-            addSystemMessage(`🤖 Modelo: <strong>DeepSeek R1 0528 Qwen3 8B</strong>`);
+            addSystemMessage(`🤖 Modelo: <strong>${DEFAULT_MODEL_ID}</strong>`);
         }
         function checkStatus() {
-            // Modelo fijo deepseek/deepseek-r1-0528-qwen3-8b ya está activo
+            // El modelo configurado ya está activo
             statusIndicator.querySelector('.status-dot').classList.add('online');
             statusText.textContent = `✅ Conectado a ${DEFAULT_MODEL_ID}`;
+        }
+
+        // Formatear Markdown básico
+        function formatMarkdown(text) {
+            return text
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                .replace(/`([^`]+)`/g, '<code style="background:#000; padding:2px 6px; border-radius:4px;">$1</code>')
+                .replace(/\n/g, '<br>');
         }
 
         // Añadir mensaje al chat
@@ -358,14 +324,7 @@
             div.className = `message ${type}`;
             
             if (type === 'ai') {
-                // Parsear Markdown básico
-                let formattedText = text
-                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                    .replace(/\*(.*?)\*/g, '<em>$1</em>')
-                    .replace(/`([^`]+)`/g, '<code style="background:#000; padding:2px 6px; border-radius:4px;">$1</code>')
-                    .replace(/\n/g, '<br>');
-                
-                div.innerHTML = formattedText;
+                div.innerHTML = formatMarkdown(text);
             } else {
                 div.textContent = text;
             }
@@ -402,7 +361,7 @@
             sendBtn.textContent = 'Escribiendo... ⏳';
 
             try {
-                // Modelo fijo: deepseek/deepseek-r1-0528-qwen3-8b
+                // Modelo configurado en el backend
                 const payload = {
                     message: message
                 };
@@ -415,12 +374,69 @@
                     body: JSON.stringify(payload)
                 });
 
-                const data = await response.json();
+                if (!response.ok) {
+                    const data = await response.json();
+                    addMessage(data.error || `Error ${response.status}`, 'error');
+                    return;
+                }
 
-                if (data.success) {
-                    addMessage(data.reply, 'ai');
-                } else {
-                    addMessage(data.error, 'error');
+                // Burbuja de IA que se va rellenando conforme llegan los tokens
+                const aiDiv = document.createElement('div');
+                aiDiv.className = 'message ai';
+                messagesContainer.appendChild(aiDiv);
+                scrollToBottom();
+
+                let aiText = '';
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let buffer = '';
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+
+                    buffer += decoder.decode(value, { stream: true });
+
+                    // Los eventos SSE se separan por una línea en blanco
+                    const events = buffer.split('\n\n');
+                    buffer = events.pop();
+
+                    for (const event of events) {
+                        const line = event.split('\n').find(l => l.startsWith('data:'));
+                        if (!line) continue;
+                        const raw = line.slice(5).trim();
+                        if (raw === '[DONE]') continue;
+
+                        let obj;
+                        try {
+                            obj = JSON.parse(raw);
+                        } catch (e) {
+                            continue;
+                        }
+
+                        if (obj.status === 'loading') {
+                            statusIndicator.querySelector('.status-dot').classList.remove('online');
+                            statusText.textContent = `⏳ ${obj.message}`;
+                            continue;
+                        }
+                        if (obj.status === 'ready') {
+                            statusIndicator.querySelector('.status-dot').classList.add('online');
+                            statusText.textContent = `✅ Conectado a ${DEFAULT_MODEL_ID}`;
+                            continue;
+                        }
+
+                        if (obj.error) {
+                            aiDiv.className = 'message error';
+                            aiDiv.textContent = obj.error;
+                            scrollToBottom();
+                            return;
+                        }
+                        if (obj.delta) {
+                            aiText += obj.delta;
+                            aiDiv.innerHTML = formatMarkdown(aiText);
+                            scrollToBottom();
+                        }
+                    }
                 }
 
             } catch (error) {
@@ -448,9 +464,9 @@
             }
         });
 
-        // No hay selector de modelos (modelo fijo: deepseek/deepseek-r1-0528-qwen3-8b)
+        // No hay selector de modelos (el modelo lo define el backend)
 
-        // Inicializar con modelo fijo deepseek/deepseek-r1-0528-qwen3-8b
+        // Inicializar UI
         initUI();
         checkStatus();
 

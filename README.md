@@ -1,21 +1,23 @@
-# 🤖 Chat con LM Studio - Interfaz Web (Modelo Fijo)
+# 🤖 Chat con LM Studio - Interfaz Web
 
-Una aplicación web moderna para chatear con el modelo **DeepSeek R1 0528 Qwen3 8B** usando LM Studio local.
+Una aplicación web moderna para chatear con modelos locales de LM Studio.
 
 ## 📋 Características Principales
 
-- ✅ **Modelo fijo**: DeepSeek R1 0528 Qwen3 8B (`deepseek/deepseek-r1-0528-qwen3-8b`)
+- ✅ **Modelo configurable** por variable de entorno (por defecto `deepseek/deepseek-r1-0528-qwen3-8b`)
+- ✅ **Idioma configurable** por variable de entorno (por defecto responde en español)
 - ✅ **Interfaz de chat moderna** con diseño oscuro tipo WhatsApp
 - ✅ **Conexión automática** a LM Studio (puerto 1234)
 - ✅ **Modo host** para Linux que no reconoce `host.docker.internal`
 - ✅ **Uso directo** del campo `content` de la respuesta (ignora `reasoning_content`)
+- ✅ **Respuesta en streaming**: el texto se muestra conforme se va generando
 
 ## 📋 Requisitos
 
 1. **LM Studio instalado y ejecutando:**
    - Descarga LM Studio: https://lmstudio.ai
    - Abre LM Studio e inicia una IA Local Server
-   - Carga el modelo `deepseek/deepseek-r1-0528-qwen3-8b` (Settings → Select Model Tab → Click 'Open')
+   - Carga el modelo configurado (por defecto `deepseek/deepseek-r1-0528-qwen3-8b`) (Settings → Select Model Tab → Click 'Open')
 
 ## 🐳 Ejecución con Docker Compose (Recomendado)
 
@@ -35,20 +37,41 @@ docker compose -f docker/docker-compose.yml up -d --build
 
 ## 🌐 Acceso
 
-Abre **http://localhost:5000** para chatear con DeepSeek R1 0528 Qwen3 8B.
+Abre **http://localhost:5000** para chatear con tu modelo local.
+
+## ⚙️ Configuración (variables de entorno)
+
+| Variable | Por defecto | Descripción |
+| --- | --- | --- |
+| `LM_STUDIO_URL` | `http://localhost:1234/v1/chat/completions` | Endpoint de la API de LM Studio |
+| `LM_STUDIO_MODEL` | `openai/gpt-oss-20b` | Modelo a usar (debe estar disponible/cargable en LM Studio) |
+| `SYSTEM_PROMPT` | `Responde siempre en español.` | Instrucción de sistema; cambia el idioma/tono. Déjala vacía para no enviar instrucción |
+| `TEMPERATURE` | `0.7` | Temperatura de muestreo. Cada modelo puede preferir otra (gpt-oss ~1.0) |
+| `MAX_TOKENS` | `4096` | Máximo de tokens de la respuesta (incluye el razonamiento interno) |
+| `LOAD_RETRY_SECONDS` | `300` | Tiempo máximo de reintento si el modelo se está cargando (JIT) |
+
+Ejemplo en local:
+
+```bash
+LM_STUDIO_MODEL='qwen/qwen2.5-7b-instruct' SYSTEM_PROMPT='Reply in English.' TEMPERATURE=1.0 python app.py
+```
+
+En Docker, define estas variables en `docker/docker-compose.yml` (ya incluye las principales).
 
 ## 🔧 Configuración Técnica
 
 ### Backend (`app.py`)
 
-- **API URL:** `http://localhost:1234/v1/chat/completions`
-- **Modelo por defecto:** `deepseek/deepseek-r1-0528-qwen3-8b` (fijo)
-- **Endpoint:** `/chat` → Procesa mensajes de chat
-- **Manejo de respuesta:** Usa directamente el campo `content` e ignora `reasoning_content`
+- **API URL:** configurable con `LM_STUDIO_URL`
+- **Modelo:** configurable con `LM_STUDIO_MODEL` (por defecto `openai/gpt-oss-20b`)
+- **Endpoint:** `/chat` → Procesa mensajes de chat y responde con un stream SSE (`text/event-stream`)
+- **Manejo de respuesta:** Emite cada token del campo `content` e ignora `reasoning_content`; termina con `data: [DONE]`
+- **Carga bajo demanda:** si LM Studio está cargando el modelo (JIT), reintenta y emite eventos `status: loading` / `status: ready`
 
 ### Frontend (`templates/index.html`)
 
 - **Interfaz responsive** con diseño oscuro
+- **Layout:** título arriba, chat al medio y estado de conexión abajo
 - **Auto-resize** del textarea
 - **Formateo Markdown** básico (negritas, cursivas, código)
 
@@ -147,6 +170,6 @@ Este proyecto es de código abierto y libre de usar.
 
 ---
 
-**¡Disfruta chateando con DeepSeek R1 0528 Qwen3 8B!** 🚀
+**¡Disfruta chateando con tu modelo local!** 🚀
 
 ¿Necesitas ayuda? Revisa la documentación de LM Studio: https://lmstudio.ai/docs/

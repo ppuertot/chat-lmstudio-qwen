@@ -1,25 +1,36 @@
 # AGENTS.md
 
-Flask web chat UI wrapping LM Studio's OpenAI-compatible API. Single fixed model `deepseek/deepseek-r1-0528-qwen3-8b`; no model selector. Comments and UI text are in Spanish — keep changes consistent.
+Flask web chat UI wrapping LM Studio's OpenAI-compatible API. Model, LM Studio URL, and system prompt are env-configurable; defaults live in `app.py`. No model selector. Comments and UI text are in Spanish — keep changes consistent.
 
 ## Run
 
 - Local: `pip install -r requirements.txt && python app.py` → http://localhost:5000.
 - Docker: `./docker/scripts.sh up` (or `docker compose -f docker/docker-compose.yml up -d --build`). Other commands: `down`, `restart`, `logs [N|follow]`, `status`, `shell`.
-- Runtime prerequisite: LM Studio must be running a Local Server on `localhost:1234` with `deepseek/deepseek-r1-0528-qwen3-8b` loaded, or `/chat` returns a connection error / 404.
+- Runtime prerequisite: LM Studio must be running a Local Server with the configured model loaded, or `/chat` returns a connection error / 404.
 - Tests, linters, typecheck, and CI do not exist in this repo. There is no test command to run.
+
+## Configuration (env vars)
+
+- `LM_STUDIO_URL` — default `http://localhost:1234/v1/chat/completions`.
+- `LM_STUDIO_MODEL` — default `openai/gpt-oss-20b`.
+- `SYSTEM_PROMPT` — default `Responde siempre en español.`; sent as the first `system` message. Set it to change language/tone.
+- `TEMPERATURE` — default `0.7`; model-dependent (gpt-oss prefers ~1.0).
+- `MAX_TOKENS` — default `4096`; raise for reasoning models.
+- `LOAD_RETRY_SECONDS` — default `300`; how long `_stream_response` retries while LM Studio JIT-loads the model.
+- `docker/docker-compose.yml` passes these; `app.py` reads them at import time.
 
 ## Layout
 
-- `app.py` — all backend logic. Module-level `LM_STUDIO_URL` (app.py:11) and `DEFAULT_MODEL_NAME` (app.py:14). Routes: `GET /` renders `templates/index.html`; `POST /chat` takes `{message}` and returns `{success, reply, timestamp}`.
-- `templates/index.html` — frontend; posts to `/chat` (index.html:410). `static/` is empty.
+- `app.py` — all backend logic. Config constants at app.py:13-41 (`LM_STUDIO_URL`, `MODEL_NAME`, `SYSTEM_PROMPT`, `TEMPERATURE`, `MAX_TOKENS`, `LOAD_RETRY_SECONDS`). Routes: `GET /` renders `templates/index.html` passing `model`; `POST /chat` takes `{message}` and returns an SSE stream (`text/event-stream`), not JSON. Events: `data: {"delta": "..."}` per token, `data: {"status": "loading"|"ready"}` around JIT loading, terminal `data: [DONE]`; failures arrive as `data: {"error": "..."}` mid-stream, so HTTP status is 200 even on LM Studio errors. Empty message returns a 400 JSON error before streaming starts.
+- `templates/index.html` — frontend; posts to `/chat` and incrementally renders `delta` chunks via `response.body.getReader()` (index.html:390). Layout: title header on top, chat in the middle, connection status bar at the bottom (no sidebar). `static/` is empty.
 - Docker build context is the repo root (`context: ..` in `docker/docker-compose.yml`), even though compose/Dockerfile live in `docker/`. Dockerfile copies `requirements.txt`, `app.py`, `templates/` into `/app`.
 
 ## Gotchas
 
-- The `LM_STUDIO_URL` env var set in `docker/docker-compose.yml` is never read — `app.py` hardcodes the URL. Changing the env var has no effect.
-- `app.py` extracts only `message.content` and ignores `reasoning_content`, so reasoning output is never shown. Keep this if you change models.
-- R1 reasoning still consumes the `max_tokens` budget (`MAX_TOKENS`, app.py:18). Keep it generous (currently 4096) or visible replies get truncated even though the model finished thinking.
+- `app.py` extracts only `delta.content` (streaming) and ignores `reasoning_content`, so reasoning output is never shown. Keep this if you change models.
+- R1 reasoning still consumes the `max_tokens` budget (`MAX_TOKENS`, app.py:37). Keep it generous (currently 4096) or visible replies get truncated even though the model finished thinking.
+- LM Studio JIT loading can return HTTP 400 `Failed to load model` while the model loads. `_stream_response` retries up to `LOAD_RETRY_SECONDS` and emits `status: loading`; don't treat every 400 as fatal.
+- Stream lines are decoded as UTF-8 explicitly; `iter_lines(decode_unicode=True)` corrupts accents because LM Studio may not advertise a charset (requests then assumes ISO-8859-1). Don't "simplify" it back.
 - `requirements.txt` lists `python-socketio` and `eventlet`, but the app is plain Flask with the dev server (no Socket.IO/eventlet usage). Don't assume async patterns.
 - `network_mode: host` is required so the container can reach LM Studio on host `localhost:1234`; `EXPOSE 5000` is cosmetic under host networking.
 - `docker/docker-compose.yml` has a commented `volumes:` mount for live `app.py` editing during development.
