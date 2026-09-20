@@ -146,11 +146,12 @@ Content-Type: application/json
 {
     "model": "deepseek/deepseek-r1-0528-qwen3-8b",
     "messages": [
+        {"role": "system", "content": "Responde siempre en español."},
         {"role": "user", "content": "Hola"}
     ],
-    "stream": false,
+    "stream": true,
     "temperature": 0.7,
-    "max_tokens": 512
+    "max_tokens": 8192
 }
 ```
 
@@ -163,6 +164,12 @@ El modelo **deepseek/deepseek-r1-0528-qwen3-8b** de LM Studio puede devolver un 
 - La app solo corre localmente (localhost)
 - No expone puertos al exterior por defecto
 - Puedes cambiar `host='0.0.0.0'` a `host='127.0.0.1'` si quieres limitarlo solo a localhost
+
+## 🙏 Créditos y agradecimientos
+
+- **[opencode](https://opencode.ai)** — agente de línea de comandos usado para desarrollar y perfeccionar el proyecto (streaming SSE, render Markdown, configuración por variables de entorno, manejo de la carga JIT y ajustes por modelo). El código se escribió con **deepseek v4.1 flash** como modelo de codificación.
+- **`deepseek/deepseek-r1-0528-qwen3-8b`** — modelo que ayudó a perfeccionar el proyecto y que hoy es el modelo por defecto.
+- **Agente bionic con `qwen/qwen3.5-9b`** — inició el proyecto con la primera versión funcional; aunque se quedó corto para las iteraciones siguientes, puso los cimientos.
 
 ## 📄 Licencia
 
