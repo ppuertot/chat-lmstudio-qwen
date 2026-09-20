@@ -287,16 +287,7 @@
                 🤖 LM Studio Chat
             </div>
 
-            <div class="model-selector">
-                <h3>Modelo</h3>
-                <select id="model-select">
-                    <option value="">Seleccionar modelo...</option>
-                    <option value="qwen/qwen3.5-9b" selected>qwen/qwen3.5-9b</option>
-                    <option value="mistral-7b-instruct-v0.2">mistral-7b-instruct-v0.2</option>
-                    <option value="gpt4all-j">gpt4all-j</option>
-                    <option value="phi-3-mini">phi-3-mini</option>
-                </select>
-            </div>
+            <!-- Modelo fijo: qwen/qwen3.5-9b -->
 
             <div class="status-indicator" id="status-indicator">
                 <div class="status-dot"></div>
@@ -347,56 +338,18 @@
         const statusIndicator = document.getElementById('status-indicator');
         const statusText = document.getElementById('status-text');
 
-        // Cargar modelos disponibles en LM Studio
-        async function loadModels() {
-            try {
-                const response = await fetch('/get_models');
-                const data = await response.json();
-                
-                if (data.models && data.models.length > 0) {
-                    // Construir opciones del dropdown desde los modelos cargados
-                    const optionsHtml = '<option value="">Seleccionar modelo...</option>' +
-                        data.models.map(m => `<option value="${m.id}">${m.display_name} (${data.count})</option>`).join('');
-                    modelSelect.innerHTML = optionsHtml;
-                    
-                    // Pre-seleccionar el primer modelo (el más reciente/activo)
-                    const defaultModel = data.models[0];
-                    modelSelect.value = defaultModel.id;
-                    
-                    // Actualizar estado
-                    statusIndicator.querySelector('.status-dot').classList.add('online');
-                    statusText.textContent = `✅ ${data.count} modelo(s) cargado(s)`;
-                    addSystemMessage(`🤖 Cargando: <strong>${defaultModel.display_name}</strong>`);
-                } else {
-                    throw new Error('No hay modelos cargados');
-                }
-            } catch (error) {
-                console.error('Error cargando modelos:', error);
-                statusIndicator.querySelector('.status-dot').classList.remove('online');
-                statusText.textContent = '❌ No se encontraron modelos';
-            }
-        }
+        // Modelo fijo: qwen/qwen3.5-9b
+        const DEFAULT_MODEL_ID = 'qwen/qwen3.5-9b';
 
-        // Verificar estado de LM Studio
+        function initUI() {
+            statusIndicator.querySelector('.status-dot').classList.add('online');
+            statusText.textContent = `✅ Conectado a ${DEFAULT_MODEL_ID}`;
+            addSystemMessage(`🤖 Modelo: <strong>Qwen 3.5 9B</strong>`);
+        }
         function checkStatus() {
-            fetch('/models')
-                .then(res => res.json())
-                .then(data => {
-                    if (data.status === 'online') {
-                        statusIndicator.querySelector('.status-dot').classList.add('online');
-                        statusText.textContent = `✅ Conectado a ${data.url}`;
-                    } else if (data.error) {
-                        statusIndicator.querySelector('.status-dot').classList.remove('online');
-                        statusText.textContent = `❌ ${data.error}`;
-                        addSystemMessage(`Error: ${data.error}`);
-                    } else {
-                        statusText.textContent = data.note || 'No se pudo verificar';
-                    }
-                })
-                .catch(() => {
-                    statusIndicator.querySelector('.status-dot').classList.remove('online');
-                    statusText.textContent = '⚠️ Verifica que LM Studio esté ejecutando una IA Local Server';
-                });
+            // Modelo fijo qwen/qwen3.5-9b ya está activo
+            statusIndicator.querySelector('.status-dot').classList.add('online');
+            statusText.textContent = `✅ Conectado a ${DEFAULT_MODEL_ID}`;
         }
 
         // Añadir mensaje al chat
@@ -449,11 +402,9 @@
             sendBtn.textContent = 'Escribiendo... ⏳';
 
             try {
-                const model = modelSelect.value || 'qwen/qwen3.5-9b';
-
+                // Modelo fijo: qwen/qwen3.5-9b
                 const payload = {
-                    message: message,
-                    model: model
+                    message: message
                 };
 
                 const response = await fetch(API_BASE, {
@@ -497,14 +448,11 @@
             }
         });
 
-        modelSelect.addEventListener('change', () => {
-            const selectedText = modelSelect.options[modelSelect.selectedIndex].text;
-            addSystemMessage(`🔄 Cambiando a modelo: <strong>${selectedText} - ${modelSelect.options[modelSelect.selectedIndex].text}</strong>`);
-        });
+        // No hay selector de modelos (modelo fijo: qwen/qwen3.5-9b)
 
-        // Inicializar
-        loadModels();  // Cargar modelos disponibles de LM Studio
-        checkStatus(); // Verificar estado de conexión
+        // Inicializar con modelo fijo qwen/qwen3.5-9b
+        initUI();
+        checkStatus();
 
         console.log('🚀 Chat con LM Studio iniciado');
         console.log('ℹ️ Asegúrate de que LM Studio esté ejecutando un modelo');
