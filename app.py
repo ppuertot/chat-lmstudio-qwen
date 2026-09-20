@@ -43,6 +43,9 @@ def chat():
         "temperature": 0.7,
         "max_tokens": 512
     }
+    # Si LM Studio usa razonamiento, combinamos reasoning + content si ambos existen
+    if 'reasoning' in payload:
+        payload['reasoning'] = False
     
     try:
         response = requests.post(
@@ -53,16 +56,13 @@ def chat():
         
         if response.status_code == 200:
             result = response.json()
-            # Extraer solo el contenido real, ignorando reasoning_content si está presente
+            # LM Studio Qwen devuelve respuesta en reasoning_content como campo principal
             message_obj = result.get('choices', [{}])[0].get('message', {})
-            content = message_obj.get('content', '')
-            reasoning_content = message_obj.get('reasoning_content', '')
             
-            # Si hay razonamiento, extraer solo el contenido real (primer campo)
-            if reasoning_content and content:
-                ai_message = content
-            else:
-                ai_message = reasoning_content or content
+            # Priorizar: reasoning_content (si tiene texto) > content > nada
+            reasoning = message_obj.get('reasoning_content', '')
+            content_text = message_obj.get('content', '')
+            ai_message = reasoning if reasoning.strip() else content_text
             
             return jsonify({
                 'success': True,
