@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat con LM Studio</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #1a1a2e;
+            --bg-secondary: #16213e;
+            --bg-message-user: #4a90d9;
+            --bg-message-ai: #2d4a5c;
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0a0;
+            --accent: #6c757d;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            width: 95%;
+            max-width: 1200px;
+            height: 90vh;
+            background: var(--bg-secondary);
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            display: flex;
+            overflow: hidden;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 300px;
+            background: var(--bg-primary);
+            padding: 20px;
+            border-right: 1px solid #2a2a4a;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 30px;
+            text-align: center;
+            color: var(--bg-message-user);
+        }
+
+        .model-selector {
+            flex: 1;
+        }
+
+        .model-selector h3 {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        #model-select {
+            width: 100%;
+            padding: 12px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--accent);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            margin-top: 15px;
+            font-size: 13px;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #e74c3c;
+        }
+
+        .status-dot.online {
+            background: #2ecc71;
+        }
+
+        .status-text {
+            color: var(--text-primary);
+            font-size: 13px;
+        }
+
+        /* Chat Area */
+        .chat-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: var(--bg-secondary);
+        }
+
+        .chat-header {
+            padding: 20px;
+            background: var(--bg-primary);
+            border-bottom: 1px solid #2a2a4a;
+        }
+
+        .chat-header h2 {
+            font-size: 18px;
+            margin-bottom: 5px;
+        }
+
+        .chat-header p {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        /* Messages */
+        #messages-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .message {
+            max-width: 80%;
+            padding: 14px 20px;
+            border-radius: 16px;
+            font-size: 15px;
+            line-height: 1.5;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .message.user {
+            align-self: flex-end;
+            background: var(--bg-message-user);
+            border-bottom-right-radius: 4px;
+        }
+
+        .message.ai {
+            align-self: flex-start;
+            background: var(--bg-message-ai);
+            border-bottom-left-radius: 4px;
+        }
+
+        .message.error {
+            align-self: center;
+            background: #e74c3c;
+            max-width: 90%;
+            text-align: center;
+            font-size: 13px;
+            white-space: pre-wrap;
+        }
+
+        .message.system {
+            align-self: center;
+            background: var(--bg-primary);
+            border: 1px solid var(--accent);
+            max-width: 90%;
+            font-size: 12px;
+            text-align: center;
+            padding: 10px 15px;
+            border-radius: 20px;
+        }
+
+        .message-time {
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-top: 5px;
+            opacity: 0.7;
+        }
+
+        /* Input Area */
+        .input-area {
+            padding: 20px;
+            background: var(--bg-primary);
+            border-top: 1px solid #2a2a4a;
+        }
+
+        .input-wrapper {
+            display: flex;
+            gap: 12px;
+        }
+
+        #message-input {
+            flex: 1;
+            padding: 15px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--accent);
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-size: 15px;
+            resize: none;
+            height: 54px;
+        }
+
+        #message-input:focus {
+            outline: none;
+            border-color: var(--bg-message-user);
+        }
+
+        .send-btn {
+            padding: 12px 24px;
+            background: var(--bg-message-user);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .send-btn:hover {
+            background: #3a7bc8;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(74, 144, 217, 0.3);
+        }
+
+        .send-btn:disabled {
+            background: var(--accent);
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-primary);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--accent);
+            border-radius: 4px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                width: 100%;
+                height: 100vh;
+                border-radius: 0;
+            }
+
+            .sidebar {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo">
+                🤖 LM Studio Chat
+            </div>
+
+            <div class="model-selector">
+                <h3>Modelo</h3>
+                <select id="model-select">
+                    <option value="">Seleccionar modelo...</option>
+                    <option value="qwen/qwen3.5-9b" selected>qwen/qwen3.5-9b</option>
+                    <option value="mistral-7b-instruct-v0.2">mistral-7b-instruct-v0.2</option>
+                    <option value="gpt4all-j">gpt4all-j</option>
+                    <option value="phi-3-mini">phi-3-mini</option>
+                </select>
+            </div>
+
+            <div class="status-indicator" id="status-indicator">
+                <div class="status-dot"></div>
+                <span class="status-text" id="status-text">Conectando...</span>
+            </div>
+        </aside>
+
+        <!-- Chat Area -->
+        <main class="chat-area">
+            <header class="chat-header">
+                <h2>💬 Chat con IA Local</h2>
+                <p>Haz preguntas y recibe respuestas instantáneas de tu modelo local</p>
+            </header>
+
+            <div id="messages-container">
+                <div class="message system">
+                    👋 ¡Bienvenido! Asegúrate de que LM Studio esté ejecutando un modelo en la API (por defecto http://localhost:1234).<br><br>
+                    Si no ves tu modelo cargado, ve a:
+                    <strong>Settings → Select Model Tab → Click "Open"</strong>
+                </div>
+            </div>
+
+            <div class="input-area">
+                <div class="input-wrapper">
+                    <textarea 
+                        id="message-input" 
+                        placeholder="Escribe tu mensaje aquí..."
+                        rows="1"
+                    ></textarea>
+                    <button class="send-btn" id="send-btn">
+                        Enviar ✨
+                    </button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Configuración
+        const API_BASE = '/chat';
+        const STATUS_CHECK_INTERVAL = 5000; // 5 segundos
+        
+        // Elementos DOM
+        const modelSelect = document.getElementById('model-select');
+        const messagesContainer = document.getElementById('messages-container');
+        const messageInput = document.getElementById('message-input');
+        const sendBtn = document.getElementById('send-btn');
+        const statusIndicator = document.getElementById('status-indicator');
+        const statusText = document.getElementById('status-text');
+
+        // Cargar modelos disponibles en LM Studio
+        async function loadModels() {
+            try {
+                const response = await fetch('/get_models');
+                const data = await response.json();
+                
+                if (data.models && data.models.length > 0) {
+                    // Construir opciones del dropdown desde los modelos cargados
+                    const optionsHtml = '<option value="">Seleccionar modelo...</option>' +
+                        data.models.map(m => `<option value="${m.id}">${m.display_name} (${data.count})</option>`).join('');
+                    modelSelect.innerHTML = optionsHtml;
+                    
+                    // Pre-seleccionar el primer modelo (el más reciente/activo)
+                    const defaultModel = data.models[0];
+                    modelSelect.value = defaultModel.id;
+                    
+                    // Actualizar estado
+                    statusIndicator.querySelector('.status-dot').classList.add('online');
+                    statusText.textContent = `✅ ${data.count} modelo(s) cargado(s)`;
+                    addSystemMessage(`🤖 Cargando: <strong>${defaultModel.display_name}</strong>`);
+                } else {
+                    throw new Error('No hay modelos cargados');
+                }
+            } catch (error) {
+                console.error('Error cargando modelos:', error);
+                statusIndicator.querySelector('.status-dot').classList.remove('online');
+                statusText.textContent = '❌ No se encontraron modelos';
+            }
+        }
+
+        // Verificar estado de LM Studio
+        function checkStatus() {
+            fetch('/models')
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status === 'online') {
+                        statusIndicator.querySelector('.status-dot').classList.add('online');
+                        statusText.textContent = `✅ Conectado a ${data.url}`;
+                    } else if (data.error) {
+                        statusIndicator.querySelector('.status-dot').classList.remove('online');
+                        statusText.textContent = `❌ ${data.error}`;
+                        addSystemMessage(`Error: ${data.error}`);
+                    } else {
+                        statusText.textContent = data.note || 'No se pudo verificar';
+                    }
+                })
+                .catch(() => {
+                    statusIndicator.querySelector('.status-dot').classList.remove('online');
+                    statusText.textContent = '⚠️ Verifica que LM Studio esté ejecutando una IA Local Server';
+                });
+        }
+
+        // Añadir mensaje al chat
+        function addMessage(text, type) {
+            const div = document.createElement('div');
+            div.className = `message ${type}`;
+            
+            if (type === 'ai') {
+                // Parsear Markdown básico
+                let formattedText = text
+                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                    .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                    .replace(/`([^`]+)`/g, '<code style="background:#000; padding:2px 6px; border-radius:4px;">$1</code>')
+                    .replace(/\n/g, '<br>');
+                
+                div.innerHTML = formattedText;
+            } else {
+                div.textContent = text;
+            }
+
+            messagesContainer.appendChild(div);
+            scrollToBottom();
+        }
+
+        // Añadir mensaje del sistema
+        function addSystemMessage(text) {
+            const div = document.createElement('div');
+            div.className = 'message system';
+            div.innerHTML = text;
+            messagesContainer.appendChild(div);
+            scrollToBottom();
+        }
+
+        // Scroll al fondo
+        function scrollToBottom() {
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        // Enviar mensaje
+        async function sendMessage() {
+            const message = messageInput.value.trim();
+            
+            if (!message) return;
+
+            // Añadir mensaje del usuario
+            addMessage(message, 'user');
+            messageInput.value = '';
+            messageInput.style.height = '54px';
+            sendBtn.disabled = true;
+            sendBtn.textContent = 'Escribiendo... ⏳';
+
+            try {
+                const model = modelSelect.value || 'qwen/qwen3.5-9b';
+
+                const payload = {
+                    message: message,
+                    model: model
+                };
+
+                const response = await fetch(API_BASE, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    addMessage(data.reply, 'ai');
+                } else {
+                    addMessage(data.error, 'error');
+                }
+
+            } catch (error) {
+                addMessage(`Error: ${error.message}`, 'error');
+            } finally {
+                sendBtn.disabled = false;
+                sendBtn.textContent = 'Enviar ✨';
+            }
+        }
+
+        // Auto-resize textarea
+        messageInput.addEventListener('input', function() {
+            this.style.height = 'auto';
+            const scrollHeight = this.scrollHeight;
+            this.style.height = Math.min(scrollHeight, 200) + 'px';
+        });
+
+        // Event listeners
+        sendBtn.addEventListener('click', sendMessage);
+        
+        messageInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+
+        modelSelect.addEventListener('change', () => {
+            const selectedText = modelSelect.options[modelSelect.selectedIndex].text;
+            addSystemMessage(`🔄 Cambiando a modelo: <strong>${selectedText} - ${modelSelect.options[modelSelect.selectedIndex].text}</strong>`);
+        });
+
+        // Inicializar
+        loadModels();  // Cargar modelos disponibles de LM Studio
+        checkStatus(); // Verificar estado de conexión
+
+        console.log('🚀 Chat con LM Studio iniciado');
+        console.log('ℹ️ Asegúrate de que LM Studio esté ejecutando un modelo');
+    </script>
+</body>
+</html>

@@ -1,0 +1,22 @@
+# Configuración para Docker Compose con network_mode: host
+# Esto es necesario cuando LM Studio solo escucha en localhost y no tiene habilitado el puerto 1234
+
+services:
+  chat-lmstudio-web:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: lmstudio-chat-web
+    # Usar modo host para poder acceder a LM Studio vía localhost
+    network_mode: host
+    environment:
+      - LM_STUDIO_URL=http://localhost:1234/v1/chat/completions
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    # Para desarrollo, descomenta la siguiente línea para montar el código Python
+    # volumes:
+    #   - ../app.py:/app/app.py
