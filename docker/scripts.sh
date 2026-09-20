@@ -15,7 +15,7 @@
 # ==============================================================================
 
 CONTAINER_NAME="lmstudio-chat-web"
-COMPOSE_FILE="../docker/docker-compose.yml"
+COMPOSE_FILE="docker/docker-compose.yml"
 
 cd "$(dirname "$0")/.." || exit 1
 

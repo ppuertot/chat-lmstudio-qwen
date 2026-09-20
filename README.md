@@ -1,21 +1,21 @@
 # 🤖 Chat con LM Studio - Interfaz Web (Modelo Fijo)
 
-Una aplicación web moderna para chatear con el modelo **Qwen 3.5 9B** usando LM Studio local.
+Una aplicación web moderna para chatear con el modelo **DeepSeek R1 0528 Qwen3 8B** usando LM Studio local.
 
 ## 📋 Características Principales
 
-- ✅ **Modelo fijo**: Qwen 3.5 9B (`qwen/qwen3.5-9b`)
+- ✅ **Modelo fijo**: DeepSeek R1 0528 Qwen3 8B (`deepseek/deepseek-r1-0528-qwen3-8b`)
 - ✅ **Interfaz de chat moderna** con diseño oscuro tipo WhatsApp
 - ✅ **Conexión automática** a LM Studio (puerto 1234)
 - ✅ **Modo host** para Linux que no reconoce `host.docker.internal`
-- ✅ **Manejo automático** del formato Qwen (reasoning_content + content)
+- ✅ **Uso directo** del campo `content` de la respuesta (ignora `reasoning_content`)
 
 ## 📋 Requisitos
 
 1. **LM Studio instalado y ejecutando:**
    - Descarga LM Studio: https://lmstudio.ai
    - Abre LM Studio e inicia una IA Local Server
-   - Carga el modelo `qwen/qwen3.5-9b` (Settings → Select Model Tab → Click 'Open')
+   - Carga el modelo `deepseek/deepseek-r1-0528-qwen3-8b` (Settings → Select Model Tab → Click 'Open')
 
 ## 🐳 Ejecución con Docker Compose (Recomendado)
 
@@ -35,16 +35,16 @@ docker compose -f docker/docker-compose.yml up -d --build
 
 ## 🌐 Acceso
 
-Abre **http://localhost:5000** para chatear con Qwen 3.5 9B.
+Abre **http://localhost:5000** para chatear con DeepSeek R1 0528 Qwen3 8B.
 
 ## 🔧 Configuración Técnica
 
 ### Backend (`app.py`)
 
 - **API URL:** `http://localhost:1234/v1/chat/completions`
-- **Modelo por defecto:** `qwen/qwen3.5-9b` (fijo)
+- **Modelo por defecto:** `deepseek/deepseek-r1-0528-qwen3-8b` (fijo)
 - **Endpoint:** `/chat` → Procesa mensajes de chat
-- **Manejo de respuesta:** Extrae automáticamente el contenido real ignorando reasoning_content
+- **Manejo de respuesta:** Usa directamente el campo `content` e ignora `reasoning_content`
 
 ### Frontend (`templates/index.html`)
 
@@ -80,13 +80,13 @@ Abre **http://localhost:5000** para chatear con Qwen 3.5 9B.
 Esto puede pasar si LM Studio está usando un formato experimental. El backend ya maneja esto automáticamente, pero puedes probar:
 
 - **Desactivar el modelo de razonamiento** en LM Studio (Settings → Server)
-- **Usar una versión diferente** del modelo Qwen que no active reasoning_content por defecto
+- **Usar una versión diferente** del modelo que no active `reasoning_content` por defecto
 
 ### ❌ Modelo no encontrado (404)
 
 El modelo debe estar **cargado** en memoria:
 1. Ve a la pestaña **Modelos** en LM Studio
-2. Selecciona el modelo `qwen/qwen3.5-9b`
+2. Selecciona el modelo `deepseek/deepseek-r1-0528-qwen3-8b`
 3. Haz click en **"Open"**
 4. Espera a que cargue completamente
 
@@ -121,7 +121,7 @@ POST http://localhost:1234/v1/chat/completions
 Content-Type: application/json
 
 {
-    "model": "qwen/qwen3.5-9b",
+    "model": "deepseek/deepseek-r1-0528-qwen3-8b",
     "messages": [
         {"role": "user", "content": "Hola"}
     ],
@@ -131,9 +131,9 @@ Content-Type: application/json
 }
 ```
 
-## 📝 Notas sobre el Modelo Qwen
+## 📝 Notas sobre el Modelo
 
-El modelo **qwen/qwen3.5-9b** de LM Studio puede usar un campo especial llamado `reasoning_content` que muestra su proceso de pensamiento antes de responder. El backend extrae automáticamente el contenido real ignorando este campo.
+El modelo **deepseek/deepseek-r1-0528-qwen3-8b** de LM Studio puede devolver un campo especial llamado `reasoning_content` con su proceso de pensamiento. El backend usa directamente el campo `content` e ignora `reasoning_content`.
 
 ## 🔒 Seguridad
 
@@ -147,6 +147,6 @@ Este proyecto es de código abierto y libre de usar.
 
 ---
 
-**¡Disfruta chateando con Qwen 3.5 9B!** 🚀
+**¡Disfruta chateando con DeepSeek R1 0528 Qwen3 8B!** 🚀
 
 ¿Necesitas ayuda? Revisa la documentación de LM Studio: https://lmstudio.ai/docs/

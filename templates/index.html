@@ -287,7 +287,7 @@
                 🤖 LM Studio Chat
             </div>
 
-            <!-- Modelo fijo: qwen/qwen3.5-9b -->
+            <!-- Modelo fijo: deepseek/deepseek-r1-0528-qwen3-8b -->
 
             <div class="status-indicator" id="status-indicator">
                 <div class="status-dot"></div>
@@ -338,16 +338,16 @@
         const statusIndicator = document.getElementById('status-indicator');
         const statusText = document.getElementById('status-text');
 
-        // Modelo fijo: qwen/qwen3.5-9b
-        const DEFAULT_MODEL_ID = 'qwen/qwen3.5-9b';
+        // Modelo fijo: deepseek/deepseek-r1-0528-qwen3-8b
+        const DEFAULT_MODEL_ID = 'deepseek/deepseek-r1-0528-qwen3-8b';
 
         function initUI() {
             statusIndicator.querySelector('.status-dot').classList.add('online');
             statusText.textContent = `✅ Conectado a ${DEFAULT_MODEL_ID}`;
-            addSystemMessage(`🤖 Modelo: <strong>Qwen 3.5 9B</strong>`);
+            addSystemMessage(`🤖 Modelo: <strong>DeepSeek R1 0528 Qwen3 8B</strong>`);
         }
         function checkStatus() {
-            // Modelo fijo qwen/qwen3.5-9b ya está activo
+            // Modelo fijo deepseek/deepseek-r1-0528-qwen3-8b ya está activo
             statusIndicator.querySelector('.status-dot').classList.add('online');
             statusText.textContent = `✅ Conectado a ${DEFAULT_MODEL_ID}`;
         }
@@ -402,7 +402,7 @@
             sendBtn.textContent = 'Escribiendo... ⏳';
 
             try {
-                // Modelo fijo: qwen/qwen3.5-9b
+                // Modelo fijo: deepseek/deepseek-r1-0528-qwen3-8b
                 const payload = {
                     message: message
                 };
@@ -448,9 +448,9 @@
             }
         });
 
-        // No hay selector de modelos (modelo fijo: qwen/qwen3.5-9b)
+        // No hay selector de modelos (modelo fijo: deepseek/deepseek-r1-0528-qwen3-8b)
 
-        // Inicializar con modelo fijo qwen/qwen3.5-9b
+        // Inicializar con modelo fijo deepseek/deepseek-r1-0528-qwen3-8b
         initUI();
         checkStatus();
 

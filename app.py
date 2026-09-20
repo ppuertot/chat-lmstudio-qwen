@@ -10,8 +10,12 @@ app = Flask(__name__)
 # API de LM Studio (por defecto corre en el puerto 1234)
 LM_STUDIO_URL = "http://localhost:1234/v1/chat/completions"
 
-# Modelo predeterminado fijo: qwen/qwen3.5-9b
-DEFAULT_MODEL_NAME = 'qwen/qwen3.5-9b'
+# Modelo predeterminado fijo: deepseek/deepseek-r1-0528-qwen3-8b
+DEFAULT_MODEL_NAME = 'deepseek/deepseek-r1-0528-qwen3-8b'
+
+# Máximo de tokens de la respuesta. Debe ser amplio porque el razonamiento
+# interno de los modelos R1 también consume este presupuesto.
+MAX_TOKENS = 4096
 
 
 @app.route('/')
@@ -24,7 +28,7 @@ def chat():
     """
     Procesa el mensaje del usuario y lo envía a LM Studio.
     
-    Usa siempre el modelo qwen/qwen3.5-9b (no hay selector de modelos).
+    Usa siempre el modelo deepseek/deepseek-r1-0528-qwen3-8b (no hay selector de modelos).
     Espera un JSON con: { "message": "..." }
     """
     data = request.json
@@ -35,17 +39,14 @@ def chat():
         return jsonify({'error': 'No hay mensaje para procesar'}), 400
     
     payload = {
-        "model": DEFAULT_MODEL_NAME,  # Siempre usar qwen/qwen3.5-9b
+        "model": DEFAULT_MODEL_NAME,  # Siempre usar deepseek/deepseek-r1-0528-qwen3-8b
         "messages": [
             {"role": "user", "content": message}
         ],
         "stream": False,
         "temperature": 0.7,
-        "max_tokens": 512
+        "max_tokens": MAX_TOKENS
     }
-    # Si LM Studio usa razonamiento, combinamos reasoning + content si ambos existen
-    if 'reasoning' in payload:
-        payload['reasoning'] = False
     
     try:
         response = requests.post(
@@ -56,13 +57,9 @@ def chat():
         
         if response.status_code == 200:
             result = response.json()
-            # LM Studio Qwen devuelve respuesta en reasoning_content como campo principal
+            # Usar solo el contenido real de la respuesta (ignorar reasoning_content)
             message_obj = result.get('choices', [{}])[0].get('message', {})
-            
-            # Priorizar: reasoning_content (si tiene texto) > content > nada
-            reasoning = message_obj.get('reasoning_content', '')
-            content_text = message_obj.get('content', '')
-            ai_message = reasoning if reasoning.strip() else content_text
+            ai_message = message_obj.get('content', '')
             
             return jsonify({
                 'success': True,
