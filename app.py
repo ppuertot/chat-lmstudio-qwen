@@ -53,9 +53,16 @@ def chat():
         
         if response.status_code == 200:
             result = response.json()
-            # Manejar ambos formatos: reasoning_content viene primero para modelos Qwen, luego content
+            # Extraer solo el contenido real, ignorando reasoning_content si está presente
             message_obj = result.get('choices', [{}])[0].get('message', {})
-            ai_message = message_obj.get('reasoning_content', '') or message_obj.get('content', '')
+            content = message_obj.get('content', '')
+            reasoning_content = message_obj.get('reasoning_content', '')
+            
+            # Si hay razonamiento, extraer solo el contenido real (primer campo)
+            if reasoning_content and content:
+                ai_message = content
+            else:
+                ai_message = reasoning_content or content
             
             return jsonify({
                 'success': True,
