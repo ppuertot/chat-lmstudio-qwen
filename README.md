@@ -73,7 +73,7 @@ En Docker, define estas variables en `docker/docker-compose.yml` (ya incluye las
 - **Interfaz responsive** con diseño oscuro
 - **Layout:** título arriba, chat al medio y estado de conexión abajo
 - **Auto-resize** del textarea
-- **Formateo Markdown** básico (negritas, cursivas, código)
+- **Formateo Markdown** completo (GFM) con `marked` + `DOMPurify` vendorizados en `static/`
 
 ### Docker (`docker/`)
 
@@ -120,7 +120,7 @@ chat-lmstudio/
 ├── app.py                          # Backend Flask con endpoint /chat
 ├── requirements.txt                # Dependencias Python
 ├── README.md                       # Esta documentación
-├── static/                        # Assets estáticos (vacío)
+├── static/                        # Assets estáticos (marked.min.js, purify.min.js)
 └── templates/
     └── index.html                  # Interfaz frontend
 └── docker/

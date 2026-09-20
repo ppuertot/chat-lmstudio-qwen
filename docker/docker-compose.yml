@@ -11,11 +11,11 @@ services:
     network_mode: host
     environment:
       - LM_STUDIO_URL=http://localhost:1234/v1/chat/completions
-      - LM_STUDIO_MODEL=openai/gpt-oss-20b
+      - LM_STUDIO_MODEL=deepseek/deepseek-r1-0528-qwen3-8b
       # Idioma/tono de las respuestas (por defecto español)
       - SYSTEM_PROMPT=Responde siempre en español.
       # Parámetros de muestreo. gpt-oss rinde mejor cerca de 1.0.
-      - TEMPERATURE=1.0
+      - TEMPERATURE=0.7
       - MAX_TOKENS=4096
       # Tiempo máximo de espera si el modelo se está cargando (JIT) en segundos
       - LOAD_RETRY_SECONDS=300

@@ -22,8 +22,9 @@ Flask web chat UI wrapping LM Studio's OpenAI-compatible API. Model, LM Studio U
 ## Layout
 
 - `app.py` — all backend logic. Config constants at app.py:13-41 (`LM_STUDIO_URL`, `MODEL_NAME`, `SYSTEM_PROMPT`, `TEMPERATURE`, `MAX_TOKENS`, `LOAD_RETRY_SECONDS`). Routes: `GET /` renders `templates/index.html` passing `model`; `POST /chat` takes `{message}` and returns an SSE stream (`text/event-stream`), not JSON. Events: `data: {"delta": "..."}` per token, `data: {"status": "loading"|"ready"}` around JIT loading, terminal `data: [DONE]`; failures arrive as `data: {"error": "..."}` mid-stream, so HTTP status is 200 even on LM Studio errors. Empty message returns a 400 JSON error before streaming starts.
-- `templates/index.html` — frontend; posts to `/chat` and incrementally renders `delta` chunks via `response.body.getReader()` (index.html:390). Layout: title header on top, chat in the middle, connection status bar at the bottom (no sidebar). `static/` is empty.
-- Docker build context is the repo root (`context: ..` in `docker/docker-compose.yml`), even though compose/Dockerfile live in `docker/`. Dockerfile copies `requirements.txt`, `app.py`, `templates/` into `/app`.
+- `templates/index.html` — frontend; posts to `/chat` and incrementally renders `delta` chunks via `response.body.getReader()` (index.html:446). Markdown is rendered client-side with vendored `marked` + `DOMPurify` (throttled with `requestAnimationFrame`). Layout: title header on top, chat in the middle, connection status bar at the bottom (no sidebar).
+- `static/` — vendored `marked.min.js` and `purify.min.js` (offline, no CDN). Loaded via `url_for('static', ...)`.
+- Docker build context is the repo root (`context: ..` in `docker/docker-compose.yml`), even though compose/Dockerfile live in `docker/`. Dockerfile copies `requirements.txt`, `app.py`, `templates/`, `static/` into `/app`.
 
 ## Gotchas
 

@@ -18,7 +18,7 @@ LM_STUDIO_URL = os.environ.get(
 # Modelo a usar (configurable con la variable de entorno LM_STUDIO_MODEL)
 MODEL_NAME = os.environ.get(
     "LM_STUDIO_MODEL",
-    "openai/gpt-oss-20b"
+    "deepseek/deepseek-r1-0528-qwen3-8b"
 )
 
 # Instrucción de sistema (idioma/tono). Por defecto responde en español.
